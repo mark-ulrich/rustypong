@@ -1,3 +1,4 @@
+#[derive(Debug, Copy)]
 pub struct Rect {
     pub left: f32,
     pub right: f32,
@@ -18,9 +19,12 @@ impl Rect {
     pub fn width(&self) -> f32 {
         self.right - self.left
     }
-
     pub fn height(&self) -> f32 {
         self.bottom - self.top
+    }
+
+    pub fn collides_with(&self, other: &Rect) -> bool {
+        self.left < other.right && self.right > other.left && self.top < other.bottom && self.bottom > other.top
     }
 
     pub fn get_sdl_rect(&self) -> sdl2::rect::Rect {
@@ -36,3 +40,15 @@ impl Rect {
         sdl2::rect::FRect::new(self.left, self.top, self.width(), self.height())
     }
 }
+
+impl Clone for Rect {
+    fn clone(&self) -> Rect {
+        Rect {
+            left: self.left,
+            right: self.right,
+            top: self.top,
+            bottom: self.bottom,
+        }
+    }
+}
+

@@ -47,4 +47,171 @@ impl Vector2f {
         let dy = self.y - other.y;
         (dx * dx + dy * dy).sqrt()
     }
+
+    pub fn normalized(&self) -> Self {
+        let magnitude = self.magnitude();
+        Self {
+            x: self.x / magnitude,
+            y: self.y / magnitude,
+        }
+    }
+
+    pub fn normalize(&mut self) {
+        let magnitude = self.magnitude();
+        self.x /= magnitude;
+        self.y /= magnitude;
+    }
+
+    /// Reflects the vector across the normal vector.
+    /// Modifies the original vector in place.
+    pub fn reflect(&mut self, normal: &Self) -> &Self {
+        let dot = self.dot(normal);
+        self.x -= 2.0 * dot * normal.x;
+        self.y -= 2.0 * dot * normal.y;
+        self
+    }
+
+    /// Returns a new vector that is the reflection of the original vector across the normal vector.
+    pub fn reflected(&self, normal: &Self) -> Self {
+        let dot = self.dot(normal);
+        Self {
+            x: self.x - 2.0 * dot * normal.x,
+            y: self.y - 2.0 * dot * normal.y,
+        }
+    }
+}
+
+impl std::ops::Add for Vector2f {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Self {
+            x: self.x + other.x,
+            y: self.y + other.y,
+        }
+    }
+}
+
+impl std::ops::AddAssign for Vector2f {
+    fn add_assign(&mut self, other: Self) {
+        self.x += other.x;
+        self.y += other.y;
+    }
+}
+
+impl std::ops::Add<f32> for Vector2f {
+    type Output = Self;
+
+    fn add(self, scalar: f32) -> Self {
+        Self {
+            x: self.x + scalar,
+            y: self.y + scalar,
+        }
+    }
+}
+
+impl std::ops::AddAssign<f32> for Vector2f {
+    fn add_assign(&mut self, scalar: f32) {
+        self.x += scalar;
+        self.y += scalar;
+    }
+}
+
+impl std::ops::Sub for Vector2f {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self {
+        Self {
+            x: self.x - other.x,
+            y: self.y - other.y,
+        }
+    }
+}
+
+impl std::ops::SubAssign for Vector2f {
+    fn sub_assign(&mut self, other: Self) {
+        self.x -= other.x;
+        self.y -= other.y;
+    }
+}
+
+impl std::ops::Sub<f32> for Vector2f {
+    type Output = Self;
+
+    fn sub(self, scalar: f32) -> Self {
+        Self {
+            x: self.x - scalar,
+            y: self.y - scalar,
+        }
+    }
+}
+
+impl std::ops::SubAssign<f32> for Vector2f {
+    fn sub_assign(&mut self, scalar: f32) {
+        self.x -= scalar;
+        self.y -= scalar;
+    }
+}
+
+impl std::ops::Mul for Vector2f {
+    type Output = Self;
+
+    fn mul(self, other: Self) -> Self {
+        Self {
+            x: self.x * other.x,
+            y: self.y * other.y,
+        }
+    }
+}
+
+impl std::ops::MulAssign for Vector2f {
+    fn mul_assign(&mut self, other: Self) {
+        self.x *= other.x;
+        self.y *= other.y;
+    }
+}
+
+impl std::ops::Mul<f32> for Vector2f {
+    type Output = Self;
+
+    fn mul(self, scalar: f32) -> Self {
+        Self {
+            x: self.x * scalar,
+            y: self.y * scalar,
+        }
+    }
+}
+
+impl std::ops::MulAssign<f32> for Vector2f {
+    fn mul_assign(&mut self, scalar: f32) {
+        self.x *= scalar;
+        self.y *= scalar;
+    }
+}
+
+impl std::ops::Div for Vector2f {
+    type Output = Self;
+
+    fn div(self, other: Self) -> Self {
+        Self {
+            x: self.x / other.x,
+            y: self.y / other.y,
+        }
+    }
+}
+
+impl std::ops::DivAssign for Vector2f {
+    fn div_assign(&mut self, other: Self) {
+        self.x /= other.x;
+        self.y /= other.y;
+    }
+}
+
+impl Clone for Vector2f {
+    fn clone(&self) -> Vector2f {
+        Vector2f {
+            x: self.x,
+            y: self.y,
+        }
+    }
 }
