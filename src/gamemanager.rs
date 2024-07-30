@@ -1,11 +1,10 @@
 use std::collections::HashMap;
-use std::hash::Hash;
 
 use crate::ball::Ball;
 use crate::color::Color;
+use crate::math::Vec2f;
 use crate::paddle::{Paddle, PaddleDirection, PaddleSide};
 use crate::rect::Rect;
-use crate::vec2f::Vec2f;
 
 #[derive(Debug)]
 pub struct GameManager {
@@ -17,14 +16,12 @@ pub struct GameManager {
 
 impl GameManager {
     pub fn new(field_bounds: Rect) -> Self {
-        let mut game_manager = GameManager {
+        GameManager {
             score: HashMap::new(),
             field_bounds,
             paddles: Self::init_paddles(field_bounds),
-            ball: Self::init_ball(GameManager::new(field_bounds.clone())),
+            ball: Self::init_ball(None),
         };
-        game_manager.ball = Ball::new(game_manager.clone(), Vec2f::new(0.0, 0.0));
-        game_manager
     }
 
     /// Resets the paddles and the ball, but keeps the scores

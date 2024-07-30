@@ -1,12 +1,12 @@
-use collidable::BoxCollidable;
+// use collidable::BoxCollidable;
 use color::Color;
 use rect::Rect;
 
+pub mod math;
 pub mod ball;
 pub mod color;
 pub mod paddle;
 pub mod rect;
-pub mod vec2f;
 pub mod collidable;
 mod gamemanager;
 
@@ -28,14 +28,13 @@ fn main() {
     let mut game_manager = gamemanager::GameManager::new(field_bounds.clone());
 
     let mut last_frame_time = std::time::Instant::now();
-    let mut dt = 0.0;
 
     game_manager.reset_field();
     game_manager.unpause();
 
     'running: loop {
         let now = std::time::Instant::now();
-        dt = (now - last_frame_time).as_secs_f32();
+        let dt = (now - last_frame_time).as_secs_f32();
 
         // ------------------- Handle Events -------------------
         for event in event_pump.poll_iter() {
@@ -114,12 +113,12 @@ fn init_sdl() -> InitSdlResult {
         .build()
     {
         Ok(window) => window,
-        Err(e) => return Err(String::from("Failed to create window"))
+        Err(_) => return Err(String::from("Failed to create window"))
     };
 
     let canvas = match window.into_canvas().build() {
         Ok(canvas) => canvas,
-        Err(e) => return Err(String::from("Failed to create canvas")),
+        Err(_) => return Err(String::from("Failed to create canvas")),
     };
 
     let event_pump = sdl_context.event_pump()?;

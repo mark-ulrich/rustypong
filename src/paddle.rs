@@ -2,8 +2,8 @@ use sdl2::video::Window;
 
 use crate::collidable::BoxCollidable;
 use crate::color::Color;
+use crate::math::Vec2f;
 use crate::rect::Rect;
-use crate::vec2f::Vec2f;
 
 /// Paddle speed in pixels per second
 const DEFAULT_PADDLE_SPEED: f32 = 200.0;
@@ -133,7 +133,7 @@ impl Paddle {
     }
 }
 
-impl BoxCollidable for &Paddle {
+impl BoxCollidable for Paddle {
     fn get_bounds(&self) -> Rect {
         Rect::new(
             self.position.x - (PADDLE_WIDTH / 2.0),
@@ -144,6 +144,7 @@ impl BoxCollidable for &Paddle {
     }
 
     fn on_collision(&mut self, other: &dyn BoxCollidable) {
+        _ = other;
         todo!()
     }
 

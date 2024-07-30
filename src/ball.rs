@@ -5,9 +5,9 @@ use rand::Rng;
 use crate::collidable::BoxCollidable;
 use crate::color::Color;
 use crate::gamemanager::GameManager;
+use crate::math::Vec2f;
 use crate::paddle::Paddle;
 use crate::rect::Rect;
-use crate::vec2f::Vec2f;
 
 /// The default speed of the ball in pixels per second.
 const DEFAULT_BALL_SPEED: f32 = 200.0;
@@ -54,7 +54,6 @@ pub struct Ball {
 
 impl Ball {
     /// Create a new ball at the given position.
-    /// Note: The bounds object is not used at this point.
     pub fn new(game_manager: GameManager, position: Vec2f) -> Self {
         let bounds = game_manager.get_field_bounds();
         Ball {
@@ -120,7 +119,7 @@ impl Ball {
     }
 
     pub fn check_paddle_collisions(&mut self, paddles: &[&Paddle; 2]) {
-        for paddle in paddles {
+        for &paddle in paddles {
             if self.get_bounds().collides_with(paddle.get_bounds()) {
                 let paddle_collidable = Box::new(paddle.clone()) as Box<dyn BoxCollidable>;
                 self.on_collision(&*paddle_collidable);
