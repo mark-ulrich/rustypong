@@ -6,7 +6,7 @@ use crate::rect::Rect;
 use crate::vec2f::Vec2f;
 
 /// Paddle speed in pixels per second
-const DEFAULT_PADDLE_SPEED: f32 = 160.0;
+const DEFAULT_PADDLE_SPEED: f32 = 200.0;
 
 /// Paddle width in pixels
 const PADDLE_WIDTH: f32 = 10.0;
@@ -26,7 +26,7 @@ pub enum PaddleSide {
 
 /// Defines the direction the paddle is moving
 #[derive(Debug, Copy)]
-enum PaddleDirection {
+pub(crate) enum PaddleDirection {
     Up,
     Down,
 }
@@ -50,10 +50,10 @@ pub struct Paddle {
 }
 
 impl Paddle {
-    pub fn new(bounds: &Rect, side: PaddleSide) -> Self {
+    pub fn new(field_bounds: Rect, side: PaddleSide) -> Self {
         let x_position = match side {
-            PaddleSide::Left => bounds.left + PADDLE_X_PADDING + (PADDLE_WIDTH / 2.0),
-            PaddleSide::Right => bounds.right - PADDLE_X_PADDING - (PADDLE_WIDTH / 2.0),
+            PaddleSide::Left => field_bounds.left + PADDLE_X_PADDING + (PADDLE_WIDTH / 2.0),
+            PaddleSide::Right => field_bounds.right - PADDLE_X_PADDING - (PADDLE_WIDTH / 2.0),
         };
         let mut tags = vec!["paddle".to_string()];
         match side {
@@ -65,10 +65,10 @@ impl Paddle {
         Paddle {
             tags,
             side,
-            bounds: bounds.clone(),
+            bounds: field_bounds,
             speed: DEFAULT_PADDLE_SPEED,
             state: PaddleState::Idle,
-            position: Vec2f::new(x_position, bounds.top + bounds.height() / 2.0),
+            position: Vec2f::new(x_position, field_bounds.top + field_bounds.height() / 2.0),
         }
     }
 
@@ -76,7 +76,7 @@ impl Paddle {
     ///
     /// # Arguments
     /// * `dt` - Time since the last frame in seconds
-    pub fn update(&mut self, dt: f32) {
+    pub fn tick(&mut self, dt: f32) {
         match self.state {
             PaddleState::Moving(direction) => {
                 let heading_y = match direction {
@@ -133,7 +133,7 @@ impl Paddle {
     }
 }
 
-impl BoxCollidable for Paddle {
+impl BoxCollidable for &Paddle {
     fn get_bounds(&self) -> Rect {
         Rect::new(
             self.position.x - (PADDLE_WIDTH / 2.0),
@@ -141,10 +141,6 @@ impl BoxCollidable for Paddle {
             self.position.x + (PADDLE_WIDTH / 2.0),
             self.position.y + (PADDLE_HEIGHT / 2.0),
         )
-    }
-
-    fn collides_with(&self, other: &dyn BoxCollidable) -> bool {
-        todo!()
     }
 
     fn on_collision(&mut self, other: &dyn BoxCollidable) {

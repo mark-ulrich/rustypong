@@ -6,14 +6,23 @@ pub struct Color {
 }
 
 impl Color {
+    /// Creates a new color from RGBA values
     pub fn new(r: f32, g: f32, b: f32, a: f32) -> Self {
         Self { r, g, b, a }
     }
 
+    /// Creates a new color from RGB values
     pub fn from_rgb(r: f32, g: f32, b: f32) -> Self {
         Self::new(r, g, b, 1.0)
     }
 
+    /// Creates a new color from a hex string
+    /// # Arguments
+    /// * `hex` - A string containing a hex color code. Can be in the following formats:
+    ///     * "#RRGGBB"
+    ///     * "RRGGBB"
+    ///     * "#RGB"
+    ///     * "RGB"
     pub fn from_hexstring(hex: &str) -> Self {
         let mut new_hex = hex;
         new_hex = new_hex.trim_start_matches('#');
@@ -31,6 +40,7 @@ impl Color {
         return Self::from_rgb(r, g, b);
     }
 
+    /// Returns the color as an SDL color
     pub fn to_sdl_color(&self) -> sdl2::pixels::Color {
         sdl2::pixels::Color::RGB(
             (self.r * 255.0) as u8,
@@ -39,6 +49,7 @@ impl Color {
         )
     }
 
+    /// Returns the color as a tuple of u8 values
     pub fn get_rgb_u8(&self) -> (u8, u8, u8) {
         (
             (self.r * 255.0) as u8,

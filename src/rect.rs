@@ -23,10 +23,6 @@ impl Rect {
         self.bottom - self.top
     }
 
-    pub fn collides_with(&self, other: &Rect) -> bool {
-        self.left < other.right && self.right > other.left && self.top < other.bottom && self.bottom > other.top
-    }
-
     pub fn get_sdl_rect(&self) -> sdl2::rect::Rect {
         sdl2::rect::Rect::new(
             self.left as i32,
@@ -38,6 +34,10 @@ impl Rect {
 
     pub fn get_sdl_frect(&self) -> sdl2::rect::FRect {
         sdl2::rect::FRect::new(self.left, self.top, self.width(), self.height())
+    }
+
+    pub fn collides_with(&self, other: Rect) -> bool {
+        self.left < other.right && self.right > other.left && self.top < other.bottom && self.bottom > other.top
     }
 }
 
