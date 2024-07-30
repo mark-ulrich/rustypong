@@ -1,6 +1,6 @@
 use sdl2::video::Window;
 
-use crate::collidable::BoxCollidable;
+use crate::boundingbox::BoundingBox;
 use crate::color::Color;
 use crate::math::Vec2f;
 use crate::rect::Rect;
@@ -133,26 +133,6 @@ impl Paddle {
     }
 }
 
-impl BoxCollidable for Paddle {
-    fn get_bounds(&self) -> Rect {
-        Rect::new(
-            self.position.x - (PADDLE_WIDTH / 2.0),
-            self.position.y - (PADDLE_HEIGHT / 2.0),
-            self.position.x + (PADDLE_WIDTH / 2.0),
-            self.position.y + (PADDLE_HEIGHT / 2.0),
-        )
-    }
-
-    fn on_collision(&mut self, other: &dyn BoxCollidable) {
-        _ = other;
-        todo!()
-    }
-
-    fn get_tags(&self) -> &Vec<String> {
-        &self.tags
-    }
-}
-
 impl Clone for PaddleSide {
     fn clone(&self) -> PaddleSide {
         match self {
@@ -181,5 +161,18 @@ impl Clone for Paddle {
             state: self.state.clone(),
             bounds: self.bounds.clone(),
         }
+    }
+}
+
+impl BoundingBox for &Paddle {
+    fn get_bounds(&self) -> Rect {
+        let half_width = PADDLE_WIDTH / 2.0;
+        let half_height = PADDLE_HEIGHT / 2.0;
+        Rect::new(
+            self.position.x - half_width,
+            self.position.y - half_height,
+            self.position.x + half_width,
+            self.position.y + half_height,
+        )
     }
 }

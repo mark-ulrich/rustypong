@@ -1,13 +1,16 @@
-// use collidable::BoxCollidable;
+use std::collections::HashMap;
+
 use color::Color;
 use rect::Rect;
+
+use crate::paddle::{Paddle, PaddleSide};
 
 pub mod math;
 pub mod ball;
 pub mod color;
 pub mod paddle;
 pub mod rect;
-pub mod collidable;
+pub mod boundingbox;
 mod gamemanager;
 
 const SCREEN_WIDTH: f32 = 640.0;
@@ -25,12 +28,17 @@ fn main() {
         top: field_y_padding,
         bottom: SCREEN_HEIGHT - field_y_padding,
     };
-    let mut game_manager = gamemanager::GameManager::new(field_bounds.clone());
+
+    let score: HashMap<String, i32> = HashMap::new();
+    let (mut left_paddle, mut right_paddle) = (
+        Paddle::new(field_bounds.clone(), PaddleSide::Left),
+        Paddle::new(field_bounds.clone(), PaddleSide::Right),
+    );
+    let mut ball = ball::Ball::new(field_bounds.clone());
 
     let mut last_frame_time = std::time::Instant::now();
 
-    game_manager.reset_field();
-    game_manager.unpause();
+    ball.start_moving();
 
     'running: loop {
         let now = std::time::Instant::now();
@@ -46,16 +54,16 @@ fn main() {
                 } => {
                     match keycode {
                         sdl2::keyboard::Keycode::W => {
-                            game_manager.move_paddle("left", paddle::PaddleDirection::Up);
+                            left_paddle.move_up();
                         }
                         sdl2::keyboard::Keycode::S => {
-                            game_manager.move_paddle("left", paddle::PaddleDirection::Down);
+                            left_paddle.move_down();
                         }
                         sdl2::keyboard::Keycode::Up => {
-                            game_manager.move_paddle("right", paddle::PaddleDirection::Up);
+                            right_paddle.move_up();
                         }
                         sdl2::keyboard::Keycode::Down => {
-                            game_manager.move_paddle("right", paddle::PaddleDirection::Down);
+                            right_paddle.move_down();
                         }
                         _ => {}
                     }
@@ -66,10 +74,10 @@ fn main() {
                 } => {
                     match keycode {
                         sdl2::keyboard::Keycode::W | sdl2::keyboard::Keycode::S => {
-                            game_manager.set_paddle_idle("left");
+                            left_paddle.stop_moving();
                         }
                         sdl2::keyboard::Keycode::Up | sdl2::keyboard::Keycode::Down => {
-                            game_manager.set_paddle_idle("right");
+                            right_paddle.stop_moving();
                         }
                         _ => {}
                     }
@@ -81,7 +89,20 @@ fn main() {
 
 
         // ------------------- Update -------------------
-        game_manager.tick(dt);
+        left_paddle.tick(dt);
+        right_paddle.tick(dt);
+        ball.tick(dt);
+
+        ball.check_paddle_collisions(&left_paddle, &right_paddle);
+        match ball.check_goal() {
+            Some(PaddleSide::Left) => {
+                dbg!("Right player scored");
+            }
+            Some(PaddleSide::Right) => {
+                dbg!("Left player scored");
+            }
+            None => {}
+        }
         // ------------------- End Update -------------------
 
 
@@ -90,7 +111,12 @@ fn main() {
         let (r, g, b) = bg_color.get_rgb_u8();
         canvas.set_draw_color(sdl2::pixels::Color::RGB(r, g, b));
         canvas.clear();
-        game_manager.render(&mut canvas);
+
+        render_field(&mut canvas, &field_bounds);
+        left_paddle.render(&mut canvas);
+        right_paddle.render(&mut canvas);
+        ball.render(&mut canvas);
+
         canvas.present();
         // ------------------- End Rendering -------------------
 
@@ -127,3 +153,10 @@ fn init_sdl() -> InitSdlResult {
 }
 
 
+fn render_field(canvas: &mut sdl2::render::Canvas<sdl2::video::Window>, field_bounds: &Rect) {
+    let field_color = Color::from_hexstring("#000");
+    let (r, g, b) = field_color.get_rgb_u8();
+    canvas.set_draw_color(sdl2::pixels::Color::RGB(r, g, b));
+
+    canvas.fill_frect(field_bounds.get_sdl_frect()).unwrap();
+}

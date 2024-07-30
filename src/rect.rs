@@ -1,3 +1,5 @@
+use crate::math::Vector2f;
+
 #[derive(Debug, Copy)]
 pub struct Rect {
     pub left: f32,
@@ -23,6 +25,18 @@ impl Rect {
         self.bottom - self.top
     }
 
+    pub fn center(&self) -> Vector2f {
+        Vector2f::new((self.left + self.right) / 2.0, (self.top + self.bottom) / 2.0)
+    }
+
+    pub fn center_x(&self) -> f32 {
+        (self.left + self.right) / 2.0
+    }
+
+    pub fn center_y(&self) -> f32 {
+        (self.top + self.bottom) / 2.0
+    }
+
     pub fn get_sdl_rect(&self) -> sdl2::rect::Rect {
         sdl2::rect::Rect::new(
             self.left as i32,
@@ -36,7 +50,7 @@ impl Rect {
         sdl2::rect::FRect::new(self.left, self.top, self.width(), self.height())
     }
 
-    pub fn collides_with(&self, other: Rect) -> bool {
+    pub fn intersects(&self, other: &Rect) -> bool {
         self.left < other.right && self.right > other.left && self.top < other.bottom && self.bottom > other.top
     }
 }

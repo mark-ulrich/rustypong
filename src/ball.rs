@@ -1,12 +1,9 @@
-use std::rc::Rc;
-
 use rand::Rng;
 
-use crate::collidable::BoxCollidable;
+use crate::boundingbox::BoundingBox;
 use crate::color::Color;
-use crate::gamemanager::GameManager;
 use crate::math::Vec2f;
-use crate::paddle::Paddle;
+use crate::paddle::{Paddle, PaddleSide};
 use crate::rect::Rect;
 
 /// The default speed of the ball in pixels per second.
@@ -28,13 +25,11 @@ enum BallState {
 /// A struct representing a ball in the game.
 #[derive(Debug)]
 pub struct Ball {
-    game_manager: Rc<GameManager>,
-
     /// The current position of the ball.
     position: Vec2f,
 
     /// The bounds of the field.
-    bounds: Rect,
+    field_bounds: Rect,
 
     /// The radius of the ball.
     radius: f32,
@@ -47,20 +42,15 @@ pub struct Ball {
 
     /// The current state of the ball.
     state: BallState,
-
-    tags: Vec<String>,
 }
 
 
 impl Ball {
     /// Create a new ball at the given position.
-    pub fn new(game_manager: GameManager, position: Vec2f) -> Self {
-        let bounds = game_manager.get_field_bounds();
+    pub fn new(bounds: Rect) -> Self {
         Ball {
-            game_manager: Rc::new(game_manager),
-            tags: vec![String::from("ball")],
-            bounds,
-            position,
+            field_bounds: bounds,
+            position: bounds.center(),
             heading: Self::generate_random_initial_ball_heading(),
             radius: BALL_RADIUS,
             speed: DEFAULT_BALL_SPEED,
@@ -80,17 +70,10 @@ impl Ball {
                 self.position += velocity;
 
                 // Bounce off the top and bottom of the field
-                if self.position.y - self.radius < self.bounds.top {
+                if self.position.y - self.radius < self.field_bounds.top {
                     self.heading = Vec2f::from_angle(self.heading).reflected(&Vec2f::DOWN).to_angle();
-                } else if self.position.y + self.radius > self.bounds.bottom {
+                } else if self.position.y + self.radius > self.field_bounds.bottom {
                     self.heading = Vec2f::from_angle(self.heading).reflect(&Vec2f::UP).to_angle();
-                }
-
-                // Bounce off the left and right of the screen
-                if self.position.x - self.radius < self.bounds.left {
-                    // self.heading = Vec2f::from_angle(self.heading).reflected(&Vec2f::RIGHT).to_angle();
-                } else if self.position.x + self.radius > self.bounds.right {
-                    // self.heading = Vec2f::from_angle(self.heading).reflect(&Vec2f::LEFT).to_angle();
                 }
             }
             BallState::Idle => {}
@@ -118,13 +101,35 @@ impl Ball {
         self.state = BallState::Idle;
     }
 
-    pub fn check_paddle_collisions(&mut self, paddles: &[&Paddle; 2]) {
-        for &paddle in paddles {
-            if self.get_bounds().collides_with(paddle.get_bounds()) {
-                let paddle_collidable = Box::new(paddle.clone()) as Box<dyn BoxCollidable>;
-                self.on_collision(&*paddle_collidable);
-            }
+    pub fn check_paddle_collisions(&mut self, left_paddle: &Paddle, right_paddle: &Paddle) {
+        let left_paddle_bounds = left_paddle.get_bounds();
+        let right_paddle_bounds = right_paddle.get_bounds();
+
+        let ball_bounds = Rect::new(
+            self.position.x - self.radius,
+            self.position.y - self.radius,
+            self.position.x + self.radius,
+            self.position.y + self.radius,
+        );
+
+        if ball_bounds.intersects(&left_paddle_bounds) {
+            dbg!("left paddle hit");
+            self.heading = Vec2f::from_angle(self.heading).reflected(&Vec2f::RIGHT).to_angle();
+            self.speed *= SPEEDUP_FACTOR;
+        } else if ball_bounds.intersects(&right_paddle_bounds) {
+            dbg!("right paddle hit");
+            self.heading = Vec2f::from_angle(self.heading).reflect(&Vec2f::LEFT).to_angle();
+            self.speed *= SPEEDUP_FACTOR;
         }
+    }
+
+    pub fn check_goal(&mut self) -> Option<PaddleSide> {
+        if self.position.x - self.radius < self.field_bounds.left {
+            return Some(PaddleSide::Right);
+        } else if self.position.x + self.radius > self.field_bounds.right {
+            return Some(PaddleSide::Left);
+        }
+        None
     }
 
     /// Generate a random heading for the ball to start moving in.
@@ -137,82 +142,12 @@ impl Ball {
             // ensure the ball is heading mostly towards the paddles
             let vec = Vec2f::from_angle(angle);
             let dot = vec.dot(&Vec2f::RIGHT);
-            if dot.abs() > 0.5 {
+            if dot.abs() > 0.4 {
                 break angle;
             }
         };
 
         angle
-    }
-}
-
-impl BoxCollidable for Ball {
-    fn get_bounds(&self) -> Rect {
-        Rect {
-            left: self.position.x - self.radius,
-            right: self.position.x + self.radius,
-            top: self.position.y - self.radius,
-            bottom: self.position.y + self.radius,
-        }
-    }
-
-    fn on_collision(&mut self, other: &dyn BoxCollidable) {
-        let other_tags = other.get_tags();
-        if !other_tags.contains(&"paddle".to_string()) {
-            return;
-        }
-
-        if other_tags.contains(&"paddle_left".to_string()) {
-            dbg!("Ball collided with left paddle");
-        } else if other_tags.contains(&"paddle_right".to_string()) {
-            dbg!("Ball collided with right paddle");
-        }
-
-        // Determine the side of the paddle that was hit
-        // WARNING: This is stupid hacky
-        let paddle_top = Rect::new(
-            other.get_bounds().left,
-            other.get_bounds().top,
-            other.get_bounds().right,
-            other.get_bounds().top + 5.0,
-        );
-        let paddle_bottom = Rect::new(
-            other.get_bounds().left,
-            other.get_bounds().bottom - 5.0,
-            other.get_bounds().right,
-            other.get_bounds().bottom,
-        );
-        let paddle_left = Rect::new(
-            other.get_bounds().left,
-            other.get_bounds().top,
-            other.get_bounds().left + 5.0,
-            other.get_bounds().bottom,
-        );
-        let paddle_right = Rect::new(
-            other.get_bounds().right - 5.0,
-            other.get_bounds().top,
-            other.get_bounds().right,
-            other.get_bounds().bottom,
-        );
-        if self.get_bounds().collides_with(paddle_top) {
-            self.heading = Vec2f::from_angle(self.heading).reflected(&Vec2f::UP).to_angle();
-            self.position.y = paddle_top.top - self.radius;
-        } else if self.get_bounds().collides_with(paddle_bottom) {
-            self.heading = Vec2f::from_angle(self.heading).reflected(&Vec2f::DOWN).to_angle();
-            self.position.y = paddle_bottom.bottom + self.radius;
-        } else if self.get_bounds().collides_with(paddle_left) {
-            self.heading = Vec2f::from_angle(self.heading).reflected(&Vec2f::LEFT).to_angle();
-            self.position.x = paddle_left.left - self.radius;
-        } else if self.get_bounds().collides_with(paddle_right) {
-            self.heading = Vec2f::from_angle(self.heading).reflected(&Vec2f::RIGHT).to_angle();
-            self.position.x = paddle_right.right + self.radius;
-        }
-
-        self.speed *= SPEEDUP_FACTOR;
-    }
-
-    fn get_tags(&self) -> &Vec<String> {
-        &self.tags
     }
 }
 
@@ -228,10 +163,8 @@ impl Clone for BallState {
 impl Clone for Ball {
     fn clone(&self) -> Ball {
         Ball {
-            game_manager: self.game_manager.clone(),
-            tags: self.tags.clone(),
             position: self.position.clone(),
-            bounds: self.bounds.clone(),
+            field_bounds: self.field_bounds.clone(),
             radius: self.radius,
             speed: self.speed,
             heading: self.heading,
